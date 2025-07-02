@@ -305,6 +305,37 @@ namespace Proyect_InvOperativa.Services
                 }
                 return listaArtD;
             }
+
+            public async Task<ArticuloInvDto?> GetArticuloYDatos(long idArticulo)
+            {
+                var articulo = await _articuloRepository.GetArticuloById(idArticulo);
+                if (articulo == null) return null;
+
+                var stock = await _stockArticuloRepository.getstockActualbyIdArticulo(idArticulo);
+                if (stock == null || stock.fechaStockFin != null) return null;
+
+                var proveedoresArt = await _proveedorArticuloRepository.GetAllArticuloProveedorByIdAsync(idArticulo);
+                var proveedorPred = proveedoresArt.FirstOrDefault(pred => pred.predeterminado)?.proveedor?.nombreProveedor ?? "";
+
+                var artDto = new ArticuloInvDto
+                {
+                    idArticulo = articulo.idArticulo,
+                    nombreArticulo = articulo.nombreArticulo,
+                    descripcion = articulo.descripcion,
+                    modeloInv = articulo.modeloInv.ToString(),
+                    demandaEst = articulo.demandaEst,
+                    tiempoRevisionDias = articulo.tiempoRevisionDias,
+                    costoAlmacen = articulo.costoAlmacen,
+                    unidadTemp = articulo.unidadTemp.ToString(),
+                    proveedor = proveedorPred,
+                    stockActual = stock.stockActual,
+                    stockSeguridad = stock.stockSeguridad,
+                    puntoPedido = stock.puntoPedido,
+                    cgi = Math.Round(articulo.cgi, 4),
+                    stockMax = articulo.stockMax
+                };
+                return artDto;
+            }
         #endregion
 
         #region Calculo LoteFijo_Q
@@ -578,10 +609,11 @@ namespace Proyect_InvOperativa.Services
         }
         #endregion
 
+        #region cantidad y subtotal para ordenCompra
             public async Task<ResultadoCantidadDto> CalcularCantidadYSubtotal(long idArticulo)
             {
                 var articulo = await _articuloRepository.GetByIdAsync(idArticulo);
-                if (articulo == null) throw new Exception($"Artículo con ID {idArticulo} no encontrado.");
+                if (articulo == null) throw new Exception($"articulo con Id {idArticulo} no encontrado ");
 
                 var proveedorPredeterminado = (await _proveedorArticuloRepository
                 .GetAllArticuloProveedorByIdAsync(idArticulo))
@@ -614,7 +646,24 @@ namespace Proyect_InvOperativa.Services
                     aviso = aviso
                 };
             }
+            #endregion
 
+            #region ajuste de inventario
+            public async Task AjusteInventarioAsync(ArticuloInvDto dto)
+            {
+                var articulo = await _articuloRepository.GetArticuloById(dto.idArticulo);
+                if (articulo == null){throw new Exception($"articulo con Id {dto.idArticulo} no encontrado ");}
+                if (dto.stockActual > dto.stockMax) {throw new Exception("el stock actual no puede superar el stock max. definido ");}
+                articulo.stockMax = dto.stockMax;
+                await _articuloRepository.UpdateAsync(articulo);
+
+                var stock = await _stockArticuloRepository.getstockActualbyIdArticulo(dto.idArticulo);
+                if (stock == null)
+                {throw new Exception($"stock no encontrado para el articulo con Id {dto.idArticulo}.");}
+                stock.stockActual = dto.stockActual;
+                await _stockArticuloRepository.UpdateAsync(stock);
+            }
+            #endregion
     }
 }
 #endregion

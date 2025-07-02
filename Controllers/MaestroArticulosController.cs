@@ -165,6 +165,26 @@ namespace Proyect_InvOperativa.Controllers
                     } catch (Exception ex){return BadRequest(new { error = ex.Message }); }
                 }
 
+                [HttpPut("ajuste-stock")]
+                public async Task<IActionResult> AjusteInventario([FromBody] ArticuloInvDto dto)
+                {
+                    try
+                    {
+                        await _maestroArticulosService.AjusteInventarioAsync(dto);
+                        return Ok(new { mensaje = "inventario actualizado correctamente " });
+                    } catch (Exception ex) { return BadRequest(new { error = ex.Message });  }
+                }
+
+                [HttpGet("articulo-datos/{idArticulo}")]
+                public async Task<IActionResult> GetArticuloYDatos(long idArticulo)
+                {
+                    try
+                    {
+                        var dto = await _maestroArticulosService.GetArticuloYDatos(idArticulo);
+                        if (dto == null) return NotFound($"no se encuentra el articulo con Id {idArticulo} ");
+                        return Ok(dto);
+                    } catch (Exception ex) { return StatusCode(500, $"error al obtener datos del articulo: {ex.Message}");}
+                }
         #endregion
 
 

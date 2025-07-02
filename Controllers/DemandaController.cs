@@ -18,41 +18,19 @@ namespace Proyect_InvOperativa.Controllers
             _maestroArticulosService = masterArt;
         }
 
-        [HttpGet("calc-demanda/{idArticulo}")]
-        public async Task<IActionResult> CalcularDemandaYDesviacion(long idArticulo)
+        [HttpGet("calcular-demanda")]
+        public async Task<IActionResult> CalcularDemanda(
+            [FromQuery] long idArticulo, 
+            [FromQuery] long tipoPrediccion, 
+            [FromQuery] long periodo, 
+            [FromQuery] double? alfa)
         {
             try
             {
-                var articulo = await _maestroArticulosService.GetArticuloById(idArticulo);
-                if (articulo == null) return NotFound(new { mensaje = $"articulo con Id {idArticulo} no encontrado " });
-
-                var resultado = await _demandaService.CalcularDemandaYDesviacionAnual(articulo);
-                return Ok(new
-                {
-                    demanda = resultado.demanda,
-                    desviacionAnual = resultado.desviacionAnual
-                });
-            } catch (InvalidOperationException ex) {return BadRequest(new { mensaje = ex.Message });
-            } catch (Exception ex){return StatusCode(500, new { mensaje = "error : " + ex.Message });}
-        }
-
-        [HttpGet("calc-errores/{idArticulo}")]
-        public async Task<IActionResult> CalcularErroresDemanda(long idArticulo)
-        {
-            try
-            {
-                var articulo = await _maestroArticulosService.GetArticuloById(idArticulo);
-                if (articulo == null) return NotFound(new { mensaje = $"articulo con Id {idArticulo} no encontrado " });
-
-                var resultado = await _demandaService.CalcularErroresDemanda(articulo);
-                return Ok(new
-                {
-                    rmse = resultado.rmse,
-                    mae = resultado.mae,
-                    mape = resultado.mape
-                });
-            } catch (InvalidOperationException ex) {return BadRequest(new { mensaje = ex.Message });
-            } catch (Exception ex) {return StatusCode(500, new { mensaje = "error : " + ex.Message });}
+                if (tipoPrediccion == 3 && (!alfa.HasValue || alfa <= 0 || alfa >= 1)) return BadRequest(new { mensaje = "Debe especificarse un valor de alfa entre 0 y 1 para la suavización exponencial." });
+                var resultado = await _demandaService.CalcDemandaYDesviacion(idArticulo, tipoPrediccion, periodo, alfa ?? 0);
+                return Ok(resultado);
+            }catch (Exception ex){return BadRequest(new { mensaje = ex.Message }); }
         }
     }
 }
