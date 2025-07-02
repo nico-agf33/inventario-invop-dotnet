@@ -106,14 +106,14 @@ namespace Proyect_InvOperativa.Controllers
         {
             var modelosInv = _maestroArticulosService.GetModelosInventario();
             return Ok(modelosInv);
-        }
+        } 
 
-        [HttpGet("modeloInventario/lista-categorias")]
-        public ActionResult<IEnumerable<object>> GetCategoriasArticulo()
+        [HttpGet("modeloInventario/lista-unidades-temp")]
+        public ActionResult<IEnumerable<object>> GetUnidadesTemp()
         {
-            var categoriasArt = _maestroArticulosService.GetCategoriasArticulo();
-            return Ok(categoriasArt);
-        }  
+            var unidadesTemp = _maestroArticulosService.GetUnidadesTemp();
+            return Ok(unidadesTemp);
+        }         
 
         #endregion
 

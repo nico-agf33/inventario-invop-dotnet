@@ -6,11 +6,11 @@ public class ArticuloInvDto
     public string nombreArticulo { get; set; } = "";
     public string descripcion { get; set; } = "";
     public string modeloInv { get; set; } = "";
-    public string categoriaArt { get; set; } = "";
     public string proveedor { get; set; } = "";
-    public  long demandaDiaria { get; set; }
+    public  long demandaEst { get; set; }
+    public string unidadTemp  { get; set; }
     public  double costoAlmacen { get; set; }
-    public  long tiempoRevision { get; set; }
+    public  long tiempoRevisionDias { get; set; }
     public long stockActual { get; set; }
     public long stockSeguridad { get; set; }
     public long puntoPedido { get; set; }

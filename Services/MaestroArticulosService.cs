@@ -87,11 +87,11 @@ namespace Proyect_InvOperativa.Services
 
                 nombreArticulo = ArticuloDto.nombreArticulo,
                 descripcion = ArticuloDto.descripcion,
-                demandaDiaria = ArticuloDto.demandaDiaria,
+                demandaEst = ArticuloDto.demandaEst,
                 costoAlmacen = ArticuloDto.costoAlmacen,
-                tiempoRevision = ArticuloDto.tiempoRevision,
-                categoriaArt = (CategoriaArt)ArticuloDto.categoriaArt,
+                tiempoRevisionDias = ArticuloDto.tiempoRevisionDias,
                 modeloInv = (ModeloInv)ArticuloDto.modeloInv,
+                unidadTemp = (UnidadTemp)ArticuloDto.unidadTemp,
                 fechaRevisionP = DateTime.Now,
                 masterArticulo = maestro,
                 stockMax = ArticuloDto.stockMax
@@ -126,11 +126,11 @@ namespace Proyect_InvOperativa.Services
             // MODIFICAR LOS DATOS PROPIOS DE ARTICULO
             articuloModificado.nombreArticulo = ArticuloDto.nombreArticulo;
             articuloModificado.descripcion = ArticuloDto.descripcion;
-            articuloModificado.demandaDiaria = ArticuloDto.demandaDiaria;
+            articuloModificado.demandaEst = ArticuloDto.demandaEst;
             articuloModificado.costoAlmacen = ArticuloDto.costoAlmacen;
-            articuloModificado.tiempoRevision = ArticuloDto.tiempoRevision;
+            articuloModificado.tiempoRevisionDias = ArticuloDto.tiempoRevisionDias;
+            articuloModificado.unidadTemp = (UnidadTemp)ArticuloDto.unidadTemp;
             articuloModificado.modeloInv = (ModeloInv)ArticuloDto.modeloInv;
-            articuloModificado.categoriaArt = (CategoriaArt)ArticuloDto.categoriaArt;
             articuloModificado.stockMax = ArticuloDto.stockMax;
             // MODIFICAR LOS DATOS PROPIOS DE STOCK ASOCIADO A ARTICULO, si es que se pueden 
 
@@ -201,14 +201,13 @@ namespace Proyect_InvOperativa.Services
             .ToList<object>();
         }
 
-        public List<object> GetCategoriasArticulo()
+        public List<object> GetUnidadesTemp()
         {
-            return Enum.GetValues(typeof(CategoriaArt))
-            .Cast<CategoriaArt>()
-            .Select(eCatArt => new { id = (int)eCatArt, nombreCatArt = eCatArt.ToString() })
+            return Enum.GetValues(typeof(UnidadTemp))
+            .Cast<UnidadTemp>()
+            .Select(uTemp => new { id = (int)uTemp, nombreUnidadTemp = uTemp.ToString() })
             .ToList<object>();
         }
-        #endregion
 
         #region Calculo mod. de inventario
             public async Task<List<ArticuloInvDto>> CalculoModInv()
@@ -234,10 +233,10 @@ namespace Proyect_InvOperativa.Services
                             await CalculoPeriodoFijoP(articulo, stock);
                             break;
                         default:
-                            // no hace nada si no hay modelo asociado
+                            // control redundante
                         continue;
                     }
-                            // buscar proveedor predeterminado
+                            // proveedor predeterminado
                         var proveedoresArt = await _proveedorArticuloRepository.GetAllArticuloProveedorByIdAsync(articulo.idArticulo);
                         if (!proveedoresArt.Any()) continue;
 
@@ -249,10 +248,10 @@ namespace Proyect_InvOperativa.Services
                         nombreArticulo = articulo.nombreArticulo,
                         descripcion = articulo.descripcion,
                         modeloInv = articulo.modeloInv.ToString(),
-                        categoriaArt = articulo.categoriaArt.ToString(),
-                        demandaDiaria = articulo.demandaDiaria,
-                        tiempoRevision = articulo.tiempoRevision,
+                        demandaEst = articulo.demandaEst,
+                        tiempoRevisionDias = articulo.tiempoRevisionDias,
                         costoAlmacen = articulo.costoAlmacen,
+                        unidadTemp = articulo.unidadTemp.ToString(),
                         proveedor = proveedorPred,
                         stockActual = stock.stockActual,
                         stockSeguridad = stock.stockSeguridad,
@@ -288,16 +287,16 @@ namespace Proyect_InvOperativa.Services
                         nombreArticulo = articulo.nombreArticulo,
                         descripcion = articulo.descripcion,
                         modeloInv = articulo.modeloInv.ToString(),
-                        categoriaArt = articulo.categoriaArt.ToString(),
-                        demandaDiaria = articulo.demandaDiaria,
+                        demandaEst = articulo.demandaEst,
+                        tiempoRevisionDias = articulo.tiempoRevisionDias,
                         costoAlmacen = articulo.costoAlmacen,
-                        tiempoRevision = articulo.tiempoRevision,
+                        unidadTemp = articulo.unidadTemp.ToString(),
                         proveedor = proveedorPred,
                         stockActual = stock.stockActual,
                         stockSeguridad = stock.stockSeguridad,
                         puntoPedido = stock.puntoPedido,
                         cgi = Math.Round(articulo.cgi,4),
-                        stockMax =articulo.stockMax
+                        stockMax = articulo.stockMax
                     });
                 }
                 return listaArtD;
@@ -305,71 +304,73 @@ namespace Proyect_InvOperativa.Services
         #endregion
 
         #region Calculo LoteFijo_Q
-            public async Task CalculoLoteFijoQ(Articulo articulo, StockArticulos stock)
-            {
-                var proveedoresArticulo = await _proveedorArticuloRepository.GetAllArticuloProveedorByIdAsync(articulo.idArticulo);
-                if (!proveedoresArticulo.Any()) return;
+        public async Task CalculoLoteFijoQ(Articulo articulo, StockArticulos stock)
+        {
+            var proveedoresArticulo = await _proveedorArticuloRepository.GetAllArticuloProveedorByIdAsync(articulo.idArticulo);
+            if (!proveedoresArticulo.Any()) return;
 
-                var proveedorArt = proveedoresArticulo.FirstOrDefault(pPred => pPred.predeterminado && pPred.fechaFinProveedorArticulo == null);
-                if (proveedorArt == null) return;
+            var proveedorArt = proveedoresArticulo.FirstOrDefault(p => p.predeterminado && p.fechaFinProveedorArticulo == null);
+            if (proveedorArt == null) return;
 
-                // parametros de calculo
-                double dProm = articulo.demandaDiaria;
-                double demandaAnual = dProm * 365;
-                double tiempoEntrega = proveedorArt.tiempoEntregaDias;
-                double costoPedido = proveedorArt.costoPedido;
-                double costoAlmacen = articulo.costoAlmacen;
+            var unidad = articulo.unidadTemp;
 
-                // obtener Z y sigma segun categoria y tiempo
-                var (Z, valSigma) = ModInventarioUtils.ObtenerZySigma(articulo.categoriaArt, tiempoEntrega);
+            // parametros
+            double dEst = articulo.demandaEst; 
+            double tiempoEntrega = ModInventarioUtils.ConvertirDesdeDias(proveedorArt.tiempoEntregaDias, unidad);
+            double tiempoRevision = ModInventarioUtils.ConvertirDesdeDias(articulo.tiempoRevisionDias, unidad);
+            double costoPedido = proveedorArt.costoPedido;
+            double costoAlmacen = ModInventarioUtils.ConvertirDesdeAnual(articulo.costoAlmacen, unidad);
+            double valSigma = ModInventarioUtils.ConvertirDesdeAnual(articulo.desviacionEstandarDemanda, unidad);
+            double Z = ModInventarioUtils.ObtenerZ(articulo.nivelServicio);
 
-                // calculo EOQ
-                double qOpt = Math.Sqrt((2 * demandaAnual * costoPedido) / costoAlmacen);
-                long qOptEnt = (long)Math.Ceiling(qOpt);
+            double qOpt = Math.Sqrt((2 * dEst * costoPedido) / costoAlmacen);
+            long qOptEnt = (long)Math.Ceiling(qOpt);
 
-                // stock de seguridad
-                double stockSeguridad = Z * valSigma;
-                long stockSeguridadEnt = (long)Math.Ceiling(stockSeguridad);
+            double stockSeg = Z * valSigma * Math.Sqrt(tiempoEntrega);
+            long stockSegEnt = (long)Math.Ceiling(stockSeg);
 
-                // punto de pedido
-                double puntoPedido = stockSeguridad + (dProm * tiempoEntrega);
-                long puntoPedidoEnt = (long)Math.Ceiling(puntoPedido);
+            double ptoPedido = stockSeg + dEst * tiempoEntrega;
+            long ptoPedidoEnt = (long)Math.Ceiling(ptoPedido);
 
-                stock.stockSeguridad = stockSeguridadEnt;
-                stock.puntoPedido = puntoPedidoEnt;
-                articulo.qOptimo = qOptEnt;
-                double cgi = CalcularCGI(demandaAnual, proveedorArt.precioUnitario, qOptEnt, costoPedido, costoAlmacen);
-                articulo.cgi = cgi;
+            // calcula cgi
+            double cgi = CalcularCGI(dEst, proveedorArt.precioUnitario, qOptEnt, costoPedido, costoAlmacen,articulo.unidadTemp);
 
-                await _stockArticuloRepository.UpdateAsync(stock);
-                await _articuloRepository.UpdateAsync(articulo);
-            }
+            articulo.qOptimo = qOptEnt;
+            articulo.cgi = cgi;
+            stock.stockSeguridad = stockSegEnt;
+            stock.puntoPedido = ptoPedidoEnt;
+            await _stockArticuloRepository.UpdateAsync(stock);
+            await _articuloRepository.UpdateAsync(articulo);
+        }
         #endregion
 
         #region Calculo PeriodoFijo_P
-            public async Task CalculoPeriodoFijoP(Articulo articulo, StockArticulos stock)
-            {
-                var proveedoresArticulo = await _proveedorArticuloRepository.GetAllArticuloProveedorByIdAsync(articulo.idArticulo);
-                if (!proveedoresArticulo.Any()) return;
+        public async Task CalculoPeriodoFijoP(Articulo articulo, StockArticulos stock)
+        {
+            var proveedoresArticulo = await _proveedorArticuloRepository.GetAllArticuloProveedorByIdAsync(articulo.idArticulo);
+            if (!proveedoresArticulo.Any()) return;
 
-                // proveedor predeterminado 
-                var proveedorArt = proveedoresArticulo.FirstOrDefault(pPred => pPred.predeterminado && pPred.fechaFinProveedorArticulo == null);
-                if (proveedorArt == null) return;
+            // proveedor predeterminado 
+            var proveedorArt = proveedoresArticulo.FirstOrDefault(p => p.predeterminado && p.fechaFinProveedorArticulo == null);
+            if (proveedorArt == null) return;
 
-                // calcular la cantidad a pedir
-                long cantidadAPedir = await _proveedorArtService.CalcCantidadAPedirP(articulo, proveedorArt);
-                if (cantidadAPedir == 0) return;
+            var unidad = articulo.unidadTemp;
 
-                // parametros de calculo del CGI
-                double demandaAnual = articulo.demandaDiaria * 365;
-                double costoUnidad = proveedorArt.precioUnitario;
-                double costoPedido = proveedorArt.costoPedido;
-                double costoAlmacen = articulo.costoAlmacen;
+            // calcula cantidad a pedir
+            long cantidadAPedir = await _proveedorArtService.CalcCantidadAPedirP(articulo, proveedorArt);
+            if (cantidadAPedir == 0) return;
 
-                double cgi = CalcularCGI(demandaAnual, costoUnidad, cantidadAPedir, costoPedido, costoAlmacen);
-                articulo.cgi = cgi;
-                await _articuloRepository.UpdateAsync(articulo);
-            }
+            // parametros
+            double demanda = articulo.demandaEst; 
+            double costoUnidad = proveedorArt.precioUnitario;
+            double costoPedido = proveedorArt.costoPedido;
+            double costoAlmacen = ModInventarioUtils.ConvertirDesdeAnual(articulo.costoAlmacen, unidad); 
+
+            // calcula cgi
+            double cgi = CalcularCGI(demanda, costoUnidad, cantidadAPedir, costoPedido, costoAlmacen, unidad);
+            articulo.cgi = cgi;
+            await _articuloRepository.UpdateAsync(articulo);
+        }
 
         public async Task ControlStockPeriodico(CancellationToken cancellationToken)
         {
@@ -394,7 +395,7 @@ namespace Proyect_InvOperativa.Services
                 // control por fecha de revision
                 if (articulo.fechaRevisionP.HasValue)
                 {
-                    TimeSpan tiempo = TimeSpan.FromMinutes(articulo.tiempoRevision);
+                    TimeSpan tiempo = TimeSpan.FromMinutes(articulo.tiempoRevisionDias);
                     DateTime proximaRevision = articulo.fechaRevisionP.Value.Add(tiempo);
                     if (DateTime.Now < proximaRevision) continue;
                 }
@@ -411,14 +412,32 @@ namespace Proyect_InvOperativa.Services
         #endregion
 
         #region Calculo CostoGlobalInv
-        private double CalcularCGI(double demandaAnual, double costoUnidad, double cantidadPedido, double costoPedido, double costoAlmacen)
+        private double CalcularCGI(double demanda, double costoUnidad, double cantidadPedido, double costoPedido, double costoAlmacen, UnidadTemp? unidad)
         {
             if (cantidadPedido <= 0) return 0;
 
+            // conversion a unidad temporal anual
+            double demandaAnual = unidad switch
+            {
+                UnidadTemp.Semanal => demanda * 52,
+                UnidadTemp.Mensual => demanda * 12,
+                UnidadTemp.Anual => demanda,
+                _ => demanda
+            };
+
+            double costoAlmacenAnual = unidad switch
+            {
+                UnidadTemp.Semanal => costoAlmacen * 52,
+                UnidadTemp.Mensual => costoAlmacen * 12,
+                UnidadTemp.Anual => costoAlmacen,
+                _ => costoAlmacen
+            };
+
             double cgi = (demandaAnual * costoUnidad) +
-             ((demandaAnual / cantidadPedido) * costoPedido) +
-             ((cantidadPedido / 2.0) * costoAlmacen);
-            return cgi;
+                        ((demandaAnual / cantidadPedido) * costoPedido) +
+                        ((cantidadPedido / 2.0) * costoAlmacenAnual);
+
+            return Math.Round(cgi, 4);
         }
         #endregion
 
@@ -594,3 +613,4 @@ namespace Proyect_InvOperativa.Services
 
     }
 }
+#endregion

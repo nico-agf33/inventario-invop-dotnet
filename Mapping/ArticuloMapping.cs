@@ -11,15 +11,17 @@ namespace Proyect_InvOperativa.Mapping
             Id(x => x.idArticulo).GeneratedBy.Identity();
             Map(x => x.nombreArticulo);
             Map(x => x.descripcion);
-            Map(x => x.demandaDiaria);
+            Map(x => x.demandaEst);
             Map(x => x.costoAlmacen);
-            Map(x => x.tiempoRevision);
+            Map(x => x.tiempoRevisionDias);
             Map(x => x.qOptimo);
             Map(x => x.stockMax);
             Map(x => x.fechaRevisionP);
             Map(x => x.cgi);
+            Map(x => x.nivelServicio);
+            Map(x => x.desviacionEstandarDemanda);            
             Map(x => x.modeloInv).CustomType<ModeloInv>();
-            Map(x => x.categoriaArt).CustomType<CategoriaArt>();
+            Map(x => x.unidadTemp).CustomType<UnidadTemp>();
 
             References(x => x.masterArticulo)
                 .Column("idMaestroArticulo")

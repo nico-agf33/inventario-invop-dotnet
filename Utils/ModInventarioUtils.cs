@@ -1,25 +1,55 @@
+using MathNet.Numerics;
+using MathNet.Numerics.Distributions;
 using Proyect_InvOperativa.Models.Enums;
 
 namespace Proyect_InvOperativa.Utils
 {
     public static class ModInventarioUtils
     {
-            public static (double Z, double sigma) ObtenerZySigma(CategoriaArt? categoria, double tiempo_p)
+        public static double ObtenerZ(double nServicio)
+        {
+            if (nServicio<=0.0 || nServicio>=100.0)
+                throw new ArgumentException(
+                    "el nivel de servicio se debe especificar en valores entre 0 y 100"
+                );
+
+            double p = nServicio/100; 
+            double Z = Normal.InvCDF(0,1,p); 
+            return Z;
+        }
+
+        public static double ConvertirDesdeAnual(double valorAnual, UnidadTemp? unidad)
+        {
+            return unidad switch
             {
-                double Z = 1.64485363; // nivel de servicio esperado (z) para 0,95
+                UnidadTemp.Semanal => valorAnual / 52.0,
+                UnidadTemp.Mensual => valorAnual / 12.0,
+                UnidadTemp.Anual => valorAnual,
+                _ => valorAnual
+            };
+        }
 
-                if (categoria == null) throw new ArgumentException("Categoria no encontrada");
-                double val_Sigma = categoria switch
-                {
-                    CategoriaArt.Categoria_A => (6.0+2.0)/2.0,
-                    CategoriaArt.Categoria_B => (4.0+1.0)/2.0,
-                    CategoriaArt.Categoria_C => (0.2+1.0)/2.0,
-                    CategoriaArt.Categoria_D => (0.1+1.0)/2.0,
-                    _ => throw new ArgumentException("Categoría no válida")
-                };
+        public static double ConvertirDesdeDias(double dias, UnidadTemp? unidad)
+        {
+            return unidad switch
+            {
+                UnidadTemp.Semanal => dias / 7.0,
+                UnidadTemp.Mensual => dias / 30.0,
+                UnidadTemp.Anual => dias / 365.0,
+                _ => dias
+            };
+        }
 
-                double sigma = val_Sigma * Math.Sqrt(tiempo_p);
-                return (Z, sigma);
-            }
+        public static double ConvertirAMensual(double valor, UnidadTemp? unidad)
+        {
+            return unidad switch
+            {
+                UnidadTemp.Semanal => valor * 4.33,
+                UnidadTemp.Anual => valor / 12.0,
+                UnidadTemp.Mensual => valor,
+                _ => valor
+            };
+        }
     }
+    
 }
