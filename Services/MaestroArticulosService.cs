@@ -94,6 +94,8 @@ namespace Proyect_InvOperativa.Services
                 unidadTemp = (UnidadTemp)ArticuloDto.unidadTemp,
                 fechaRevisionP = DateTime.Now,
                 masterArticulo = maestro,
+                nivelServicio = ArticuloDto.nivelServicio,
+                desviacionEstandarDemanda = ArticuloDto.desviacionEstandarDemanda,
                 stockMax = ArticuloDto.stockMax
             };
 
@@ -131,6 +133,8 @@ namespace Proyect_InvOperativa.Services
             articuloModificado.tiempoRevisionDias = ArticuloDto.tiempoRevisionDias;
             articuloModificado.unidadTemp = (UnidadTemp)ArticuloDto.unidadTemp;
             articuloModificado.modeloInv = (ModeloInv)ArticuloDto.modeloInv;
+            articuloModificado.nivelServicio = ArticuloDto.nivelServicio;
+            articuloModificado.desviacionEstandarDemanda = ArticuloDto.desviacionEstandarDemanda;
             articuloModificado.stockMax = ArticuloDto.stockMax;
             // MODIFICAR LOS DATOS PROPIOS DE STOCK ASOCIADO A ARTICULO, si es que se pueden 
 

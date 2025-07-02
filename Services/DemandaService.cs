@@ -18,6 +18,7 @@ namespace Proyect_InvOperativa.Services
 
         public async Task<(double demanda, double desviacionAnual)> CalcularDemandaYDesviacionAnual(Articulo articulo)
         {
+            await ValidarExistenciaVentas(articulo);
             var detalles = await _detVentasRepository.GetByArticuloIdAsync(articulo.idArticulo);
 
             // agrupa ventas por año y mes
@@ -72,6 +73,7 @@ namespace Proyect_InvOperativa.Services
      
         public async Task<(double rmse, double mae, double mape)> CalcularErroresDemanda(Articulo articulo)
         {
+            await ValidarExistenciaVentas(articulo);
             var (demandaEstimacion, _) = await CalcularDemandaYDesviacionAnual(articulo);
             double demandaMensual = ModInventarioUtils.ConvertirAMensual(demandaEstimacion, articulo.unidadTemp);
             var detalles = await _detVentasRepository.GetByArticuloIdAsync(articulo.idArticulo);
@@ -108,6 +110,12 @@ namespace Proyect_InvOperativa.Services
             double rmse = Math.Sqrt(errCuadrados.Average());
             double mape = errPorcentuales.Average();
             return (Math.Round(rmse, 4), Math.Round(mae, 4), Math.Round(mape, 4));
+        }
+
+        private async Task ValidarExistenciaVentas(Articulo articulo)
+        {
+            var detalles = await _detVentasRepository.GetByArticuloIdAsync(articulo.idArticulo);
+            if (detalles == null || !detalles.Any(detV => detV.venta != null && detV.cantidad > 0)) throw new InvalidOperationException($"no existen ventas validas para el articulo '{articulo.nombreArticulo}' (Id {articulo.idArticulo})");
         }
     }
 }
