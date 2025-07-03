@@ -67,13 +67,14 @@ builder.Services.AddControllers();
 // raro pero parece funcionar
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:8008")
-            .AllowAnyHeader()
-            .AllowAnyMethod(); 
-        });
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:8008")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .WithExposedHeaders("Access-Control-Allow-Private-Network")
+              .SetIsOriginAllowedToAllowWildcardSubdomains();
+    });
 });
 
 var app = builder.Build();
@@ -104,12 +105,27 @@ using (var scope = app.Services.CreateScope())
             app.UseHsts();
 
         }
+		
+app.Use(async (context, next) =>
+{
+    if (context.Request.Headers.ContainsKey("Access-Control-Request-Private-Network"))
+    {
+        context.Response.Headers.Add("Access-Control-Allow-Private-Network", "true");
+    }
+    await next.Invoke();
+});		
 
 app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.Use(async (context, next) =>
+{
+    Console.WriteLine("Origin: " + context.Request.Headers["Origin"]);
+    await next.Invoke();
+});
 
 app.MapControllers();
 
