@@ -433,7 +433,7 @@ namespace Proyect_InvOperativa.Services
                 var proveedoresRelacionados = await _proveedorArticuloRepository.GetAllArticuloProveedorByIdAsync(idArticulo);
                 var proveedorPredeterminado = proveedoresRelacionados.FirstOrDefault(pred => pred.predeterminado);
     
-                if (proveedorPredeterminado == null) throw new Exception("Este artículo no posee proveedor predeterminado.");
+                if (proveedorPredeterminado == null) throw new Exception("este articulo no posee proveedor predeterminado ");
                 return proveedorPredeterminado.proveedor!.idProveedor;
             }
         #endregion

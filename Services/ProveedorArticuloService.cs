@@ -131,26 +131,31 @@ namespace Proyect_InvOperativa.Services
         #endregion
 
         #region lista articulos NO relacionados al proveedor
-            public async Task<List<ArticuloDto>> ArticulosNoRelacionadosProv(long idProveedor)
+        public async Task<List<ArticuloDto>> ArticulosNoRelacionadosProv(long idProveedor)
+        {
+            var articulos = await _articuloRepository.GetAllArticulos();
+            var articulosRelacionados = await _proveedoresArticuloRepository.GetAllByProveedorIdAsync(idProveedor);
+
+            var idsRelacionados = articulosRelacionados
+            .Select(pArt => pArt.articulo.idArticulo)
+            .ToHashSet();
+
+            var articulosNoRelacionados = new List<ArticuloDto>();
+
+            foreach (var art in articulos)
             {
-                var Articulos = await _articuloRepository.GetAllAsync();
-                var articulosRelacionados = await _proveedoresArticuloRepository.GetAllByProveedorIdAsync(idProveedor);
+                if (idsRelacionados.Contains(art.idArticulo)) continue;
+                var stock = await _stockArtRepository.getstockActualbyIdArticulo(art.idArticulo);
+                if (stock == null || stock.fechaStockFin != null) continue;
 
-                var idsRelacionados = articulosRelacionados
-                .Select(pArt => pArt.articulo.idArticulo)
-                .ToHashSet(); 
-
-                var articulosNoRelacionados = Articulos
-                .Where(art => !idsRelacionados.Contains(art.idArticulo))
-                .Select(art => new ArticuloDto
+                articulosNoRelacionados.Add(new ArticuloDto
                 {
-                       idArticulo = art.idArticulo,
-                       nombreArticulo = art.nombreArticulo
-                })
-                .ToList();
-
-             return articulosNoRelacionados;
+                    idArticulo = art.idArticulo,
+                    nombreArticulo = art.nombreArticulo
+                });
             }
+            return articulosNoRelacionados;
+        }
         #endregion
     }
 }

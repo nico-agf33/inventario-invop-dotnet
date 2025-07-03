@@ -124,10 +124,10 @@ namespace Proyect_InvOperativa.Controllers
             public async Task<IActionResult> CambiarProveedorOrdenCompra(long nOrdenCompra, long idProveedor)
             {
             
-            try {
-             await _ordenCompraService.CambiarProveedor(nOrdenCompra, idProveedor);
-             return Ok(new { mensaje = "proveedor actualizado correctamente para la orden de compra " });
-            } catch (Exception ex){return BadRequest(new { error = ex.Message });}
+                try {
+                await _ordenCompraService.CambiarProveedor(nOrdenCompra, idProveedor);
+                return Ok(new { mensaje = "proveedor actualizado correctamente para la orden de compra " });
+                } catch (Exception ex){return BadRequest(new { error = ex.Message });}
             
             }
     }
