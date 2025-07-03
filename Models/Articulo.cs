@@ -12,6 +12,7 @@ namespace Proyect_InvOperativa.Models
         public virtual double costoAlmacen { get; set; }
         public virtual long tiempoRevisionDias { get; set; }
         public virtual long qOptimo { get; set; }
+        public virtual double precioVenta { get; set; }
         public virtual DateTime? fechaRevisionP { get; set; }
         public virtual double cgi { get; set; }
         public virtual long stockMax { get; set; }

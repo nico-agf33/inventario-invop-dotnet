@@ -44,20 +44,24 @@ builder.Services.AddScoped<OrdenCompraEstadoRepository>();
 builder.Services.AddScoped<ProveedoresRepository>();
 builder.Services.AddScoped<ProveedorEstadoRepository>();
 builder.Services.AddScoped<VentasRepository>();
+builder.Services.AddScoped<DetalleVentasRepository>();
 builder.Services.AddScoped<OrdenCompraRepository>();
 builder.Services.AddScoped<StockArticuloRepository>();
 builder.Services.AddScoped<DetalleOrdenCompraRepository>();
+builder.Services.AddScoped<DescuentoArticuloRepository>();
 builder.Services.AddScoped<BaseRepository<DetalleVentas>>();
 
 //Registro de Servicios
 builder.Services.AddScoped<MaestroArticulosService>();
 builder.Services.AddScoped<OrdenCompraService>();
+builder.Services.AddScoped<DemandaService>();
 builder.Services.AddScoped<VentasService>();
 builder.Services.AddScoped<ProveedorArticuloService>();
 builder.Services.AddScoped<OrdenCompraEstadoService>();
 builder.Services.AddScoped<DetalleOrdenCompraService>();
 builder.Services.AddScoped<ProveedorService>();
 builder.Services.AddScoped<ProveedorEstadoService>();
+builder.Services.AddScoped<DescuentoArticuloService>();
 builder.Services.AddHostedService<ControlStockPeriodoFijoService>();
 
 var apiBaseRoute = builder.Configuration.GetValue<string>("ApiBaseRoute");

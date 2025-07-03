@@ -15,6 +15,7 @@ namespace Proyect_InvOperativa.Mapping
             Map(x => x.costoAlmacen);
             Map(x => x.tiempoRevisionDias);
             Map(x => x.qOptimo);
+            Map(x => x.precioVenta);
             Map(x => x.stockMax);
             Map(x => x.fechaRevisionP);
             Map(x => x.cgi);
