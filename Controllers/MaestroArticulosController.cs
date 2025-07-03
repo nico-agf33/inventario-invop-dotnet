@@ -3,6 +3,7 @@ using Proyect_InvOperativa.Dtos.Articulo;
 using Proyect_InvOperativa.Dtos.MaestroArticulo;
 using Proyect_InvOperativa.Dtos.Proveedor;
 using Proyect_InvOperativa.Services;
+using Proyect_InvOperativa.Utils;
 
 namespace Proyect_InvOperativa.Controllers
 {
@@ -185,6 +186,17 @@ namespace Proyect_InvOperativa.Controllers
                         return Ok(dto);
                     } catch (Exception ex) { return StatusCode(500, $"error al obtener datos del articulo: {ex.Message}");}
                 }
+        #endregion
+
+        #region test funcion  ObtenerZ
+        [HttpGet("test-z")]
+        public ActionResult<double> ObtenerZTest(double nivelServicio)
+        {
+            try
+            {
+                return Ok(ModInventarioUtils.ObtenerZ(nivelServicio));
+            }catch (Exception ex){return BadRequest(new { error = ex.Message });}
+        }
         #endregion
 
 
