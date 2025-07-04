@@ -45,7 +45,7 @@ namespace Proyect_InvOperativa.Services
             var stockArticulo = await _stockArticuloRepository.getstockActualbyIdArticulo(idArticulo);
 
             if (stockArticulo == null) return false; 
-            return stockArticulo.stockActual >= cantidadSolicitada;
+            return (stockArticulo.stockActual >= cantidadSolicitada);
         }
 
         private async Task<string?> ActualizarStockVenta(Articulo articulo, DetalleVentas detalle)

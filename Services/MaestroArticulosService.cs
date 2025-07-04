@@ -214,58 +214,31 @@ namespace Proyect_InvOperativa.Services
         }
 
         #region Calculo mod. de inventario
-            public async Task<List<ArticuloInvDto>> CalculoModInv()
+        public async Task<List<ArticuloInvDto>> CalculoModInv()
+        {
+            var articulos = await _articuloRepository.GetAllArticulos();
+
+            foreach (var articulo in articulos)
             {
-                var articulos = await _articuloRepository.GetAllArticulos();
-                var listaArt = new List<ArticuloInvDto>();
-                foreach (var articulo in articulos)
+                // obtener stock asociado
+                var stock = await _stockArticuloRepository.getstockActualbyIdArticulo(articulo.idArticulo);
+                if (stock == null || stock.fechaStockFin != null)  {  continue;   }
+
+                // aplicar cálculo según modelo de inventario
+                switch (articulo.modeloInv)
                 {
-                    // obtener stock asociado
-                    var stock = await _stockArticuloRepository.getstockActualbyIdArticulo(articulo.idArticulo);
-                    if (stock == null || stock.fechaStockFin != null)
-                    {
-                        continue; // articulo dado de baja
-                    }
-
-                    // verificar modelo de inventario 
-                    switch (articulo.modeloInv)
-                    {
-                        case ModeloInv.LoteFijo_Q:
-                            await CalculoLoteFijoQ(articulo, stock);
-                            break;
-                        case ModeloInv.PeriodoFijo_P:
-                            await CalculoPeriodoFijoP(articulo, stock);
-                            break;
-                        default:
-                            // control redundante
-                        continue;
-                    }
-                            // proveedor predeterminado
-                        var proveedoresArt = await _proveedorArticuloRepository.GetAllArticuloProveedorByIdAsync(articulo.idArticulo);
-                        if (!proveedoresArt.Any()) continue;
-
-                        var proveedorPred = proveedoresArt.FirstOrDefault(pred => pred.predeterminado)?.proveedor?.nombreProveedor ?? "";
-
-                    listaArt.Add(new ArticuloInvDto
-                    {
-                        idArticulo = articulo.idArticulo,
-                        nombreArticulo = articulo.nombreArticulo,
-                        descripcion = articulo.descripcion,
-                        modeloInv = articulo.modeloInv.ToString(),
-                        demandaEst = articulo.demandaEst,
-                        tiempoRevisionDias = articulo.tiempoRevisionDias,
-                        costoAlmacen = articulo.costoAlmacen,
-                        unidadTemp = articulo.unidadTemp.ToString(),
-                        proveedor = proveedorPred,
-                        stockActual = stock.stockActual,
-                        stockSeguridad = stock.stockSeguridad,
-                        puntoPedido = stock.puntoPedido,
-                        cgi = Math.Round(articulo.cgi,4),
-                        stockMax = articulo.stockMax
-                    });
+                    case ModeloInv.LoteFijo_Q:
+                        await CalculoLoteFijoQ(articulo, stock);
+                        break;
+                    case ModeloInv.PeriodoFijo_P:
+                        await CalculoPeriodoFijoP(articulo, stock);
+                        break;
+                    default:
+                        continue; // es redundante pero por las dudas
                 }
-                return listaArt;
             }
+            return await ListarArticulosYDatos();
+        }
         #endregion
 
         #region Lista Articulos y datos
