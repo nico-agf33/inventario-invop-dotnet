@@ -20,7 +20,7 @@ namespace Proyect_InvOperativa.Services
         {
             _logger = logger;
             _maestroArticuloService = maestroArticuloService;
-            _intervalo = TimeSpan.FromMinutes(60); // cada 12 horas, se puede cambiar
+            _intervalo = TimeSpan.FromMinutes(60); // si se quiere en horas o dias usar FromHours / FromDays
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

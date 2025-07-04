@@ -8,10 +8,7 @@ namespace Proyect_InvOperativa.Services
 {
     public class OrdenCompraService
     {
-        #region Lista de Tareas
-        //Alta - Modificacion - Baja
-        //Gestion de Estado --> Esto se ve pesado 
-        #endregion
+
 
         private readonly OrdenCompraRepository _ordenCompraRepository;
         private readonly OrdenCompraEstadoRepository _ordenCompraEstadoRepository;

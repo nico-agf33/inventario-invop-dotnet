@@ -8,19 +8,7 @@ using Proyect_InvOperativa.Utils;
 
 namespace Proyect_InvOperativa.Services
 {
-    #region LISTA DE FALTANTES
-    /// <summary>
-    //Creacion, modificacion y eliminacion de Articulo (LISTO)
-    //    Asignar proveedor Predeterminado
-    //    Determinacion del modelo de inventario
-    //    Calculo del modelo lote fijo
-    //    Calculo del modelo Intervalo fijo
-    //    Calculo del CGI
-    //    Listado de productos a reponer //// Para hacer el pedido
-    //    Listado Productos Faltantes
-    //    Listado Proveedores x Articulo
-    /// </summary>
-    #endregion
+
     public class MaestroArticulosService
     {
         private readonly ArticuloRepository _articuloRepository;

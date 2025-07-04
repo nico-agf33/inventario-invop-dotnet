@@ -9,9 +9,7 @@ namespace Proyect_InvOperativa.Services
 {
     public class VentasService
     {
-        #region LISTA DE FALTANTES
-        //Alta Venta
-        #endregion
+
 
         private readonly StockArticuloRepository _stockArticuloRepository;
         private readonly ArticuloRepository _articuloRepository;
