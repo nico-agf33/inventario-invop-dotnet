@@ -63,7 +63,7 @@ namespace Proyect_InvOperativa.Services
             double T = ModInventarioUtils.ConvertirDesdeDias(articulo.tiempoRevisionDias, unidad);
             double L = ModInventarioUtils.ConvertirDesdeDias(proveedorArt.tiempoEntregaDias, unidad);
             double periodoVulnerable = T + L;
-            double valSigma = ModInventarioUtils.ConvertirDesdeAnual(articulo.desviacionEstandarDemanda, unidad);
+            double valSigma = ModInventarioUtils.ConvertirDesvEstandarDesdeAnual(articulo.desviacionEstandarDemanda, unidad);
             var Z = ModInventarioUtils.ObtenerZ(articulo.nivelServicio);
             double dEst = articulo.demandaEst;
 

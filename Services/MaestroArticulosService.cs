@@ -316,7 +316,7 @@ namespace Proyect_InvOperativa.Services
             double tiempoRevision = ModInventarioUtils.ConvertirDesdeDias(articulo.tiempoRevisionDias, unidad);
             double costoPedido = proveedorArt.costoPedido;
             double costoAlmacen = ModInventarioUtils.ConvertirDesdeAnual(articulo.costoAlmacen, unidad);
-            double valSigma = ModInventarioUtils.ConvertirDesdeAnual(articulo.desviacionEstandarDemanda, unidad);
+            double valSigma = ModInventarioUtils.ConvertirDesvEstandarDesdeAnual(articulo.desviacionEstandarDemanda, unidad);
             double Z = ModInventarioUtils.ObtenerZ(articulo.nivelServicio);
 
             double qOpt = Math.Sqrt((2 * dEst * costoPedido) / costoAlmacen);

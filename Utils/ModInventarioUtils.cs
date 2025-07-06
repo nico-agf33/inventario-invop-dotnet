@@ -50,6 +50,17 @@ namespace Proyect_InvOperativa.Utils
                 _ => valor
             };
         }
+
+	public static double ConvertirDesvEstandarDesdeAnual(double sigmaAnual, UnidadTemp? unidad)
+	{
+	    return unidad switch
+	    {
+		UnidadTemp.Semanal => sigmaAnual / Math.Sqrt(52.0),
+		UnidadTemp.Mensual => sigmaAnual / Math.Sqrt(12.0),
+		UnidadTemp.Anual => sigmaAnual,
+		_ => sigmaAnual
+	    };
+	}
     }
     
 }

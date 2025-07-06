@@ -481,48 +481,52 @@ namespace Proyect_InvOperativa.Services
             #endregion
 
             #region cambiar proveedor de ordenCompra
-            public async Task CambiarProveedor(long nOrdenCompra, long idProveedor)
-            {
-                var orden = await _ordenCompraRepository.GetOrdenCompraConEstado(nOrdenCompra);
-                if (orden == null) throw new Exception($"orden de compra con numero {nOrdenCompra} no encontrada ");
+	public async Task CambiarProveedor(long nOrdenCompra, long idProveedor)
+	{
+	    var orden = await _ordenCompraRepository.GetOrdenCompraConEstado(nOrdenCompra);
+	    if (orden == null) throw new Exception($"orden de compra con numero {nOrdenCompra} no encontrada ");
 
-                var detalles = await _detalleOrdenCompraRepository.GetDetallesByOrdenId(nOrdenCompra);
-                var articulosNoAsociados = new List<long>();
-                if (detalles.Any()) {
-                    foreach (var detalle in detalles)
-                    {
-                        var proveedorArt = await _proveedorArtRepository.GetProvArtByIdsAsync(detalle.articulo.idArticulo, idProveedor);
-                        if (proveedorArt == null)
-                        {
-                            articulosNoAsociados.Add(detalle.articulo.idArticulo);
-                        }
-                    }
-                }
+	    var detalles = await _detalleOrdenCompraRepository.GetDetallesByOrdenId(nOrdenCompra);
+	    var articulosNoAsociados = new List<(long id, string nombre)>();
 
-                if (articulosNoAsociados.Any())
-                {
-                    var articulosTexto = string.Join(", ", articulosNoAsociados);
-                    throw new Exception($"el proveedor seleccionado no esta asociado a los articulos con Id: {articulosTexto} ");
-                }
-                var proveedor = await _proveedorRepository.GetByIdAsync(idProveedor);
-                if (proveedor == null) throw new Exception($"proveedor con Id {idProveedor} no encontrado ");
-                orden.proveedor = proveedor;
-                await _ordenCompraRepository.UpdateAsync(orden);
+	    if (detalles.Any()) 
+	    {
+		foreach (var detalle in detalles)
+		{
+		    var proveedorArt = await _proveedorArtRepository.GetProvArtByIdsAsync(detalle.articulo.idArticulo, idProveedor);
+		    if (proveedorArt == null)
+		    {
+		        articulosNoAsociados.Add((detalle.articulo.idArticulo, detalle.articulo.nombreArticulo));
+		    }
+		}
+	    }
+	    if (articulosNoAsociados.Any())
+	    {
+		var articulosTexto = string.Join(", ", articulosNoAsociados.Select(a => $"[{a.id}] {a.nombre}"));
+		throw new Exception($"el proveedor seleccionado no esta asociado a los siguientes articulos: {articulosTexto} ");
+	    }
 
-                double nuevoTotal = 0;
-                foreach (var detalle in detalles)
-                {
-                    var proveedorArt = await _proveedorArtRepository.GetProvArtByIdsAsync(detalle.articulo.idArticulo, idProveedor);
-                    double nuevoPrecioUnitario = proveedorArt.precioUnitario;
-                    double nuevoSubtotal = nuevoPrecioUnitario * detalle.cantidadArticulos;
-                    detalle.precioSubTotal = nuevoSubtotal;
-                    nuevoTotal += nuevoSubtotal;
+	    var proveedor = await _proveedorRepository.GetByIdAsync(idProveedor);
+	    if (proveedor == null) throw new Exception($"proveedor con Id {idProveedor} no encontrado ");
 
-                    await _detalleOrdenCompraRepository.UpdateAsync(detalle);
-               }
-                orden.totalPagar = nuevoTotal;
-                await _ordenCompraRepository.UpdateAsync(orden);
-            }
+	    orden.proveedor = proveedor;
+	    await _ordenCompraRepository.UpdateAsync(orden);
+
+	    double nuevoTotal = 0;
+	    foreach (var detalle in detalles)
+	    {
+		var proveedorArt = await _proveedorArtRepository.GetProvArtByIdsAsync(detalle.articulo.idArticulo, idProveedor);
+		double nuevoPrecioUnitario = proveedorArt.precioUnitario;
+		double nuevoSubtotal = nuevoPrecioUnitario * detalle.cantidadArticulos;
+
+		detalle.precioSubTotal = nuevoSubtotal;
+		nuevoTotal += nuevoSubtotal;
+
+		await _detalleOrdenCompraRepository.UpdateAsync(detalle);
+	    }
+	    orden.totalPagar = nuevoTotal;
+	    await _ordenCompraRepository.UpdateAsync(orden);
+	}
             #endregion
 
             #region verificar orden de compra
