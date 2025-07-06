@@ -18,13 +18,12 @@
 
             var other = (ProveedorArticulo)obj;
 
-            // Compara las claves compuestas (articulo y proveedor)
             return Equals(articulo, other.articulo) && Equals(proveedor, other.proveedor);
         }
 
         public override int GetHashCode()
         {
-            unchecked // para permitir overflow
+            unchecked 
             {
                 int hash = 17;
                 hash = hash * 23 + (articulo != null ? articulo.GetHashCode() : 0);
