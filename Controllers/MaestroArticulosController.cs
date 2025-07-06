@@ -30,14 +30,15 @@ namespace Proyect_InvOperativa.Controllers
 
         }
 
-        [HttpDelete("articulo/DeleteArticulo/{idArticulo}")]
-        public async Task<IActionResult> DeleteArticulo(long idArticulo)
-        {
-            await _maestroArticulosService.DeleteArticulo(idArticulo);
-
-            return Ok("Artículo eliminado. ");
-
-        }
+	[HttpDelete("articulo/DeleteArticulo/{idArticulo}")]
+	public async Task<IActionResult> DeleteArticulo(long idArticulo)
+	{
+	    try
+	    {
+		await _maestroArticulosService.DeleteArticulo(idArticulo);
+		return Ok(new { mensaje = "articulo eliminado correctamente" });
+	    }catch (Exception ex){return BadRequest(new { mensaje = ex.Message });}
+	}
 
         [HttpPost("articulo/UpdateArticulo")]
         public async Task<IActionResult> UpdateArticulo([FromBody] ArticuloDto articuloDto)
