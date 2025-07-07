@@ -192,7 +192,7 @@ namespace Proyect_InvOperativa.Services
         public async Task<(double demanda, double desviacionEstandar,List<DemandaTablaDto> entradas)> CalcDemandaSuavizacionExp(Articulo articulo, long periodo, double alfa)
         {
             if (alfa <= 0 || alfa >= 1) throw new ArgumentException("el parametro `alfa` debe debe estar en el rango: (0 < alfa < 1)");
-            int meses = periodo switch
+            int n = periodo switch
             {
                 1 => 3,
                 2 => 6,
@@ -201,7 +201,8 @@ namespace Proyect_InvOperativa.Services
             };
             await ValidarExistenciaVentas(articulo);
 
-            var fechaInicio = DateTime.Now.AddMonths(-meses);
+            var fechaReferencia = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+	        var fechaInicio = fechaReferencia.AddMonths(-n);
             var detalles = await _detVentasRepository.GetByArticuloIdAsync(articulo.idArticulo);
             var ventasPorMes = detalles
             .Where(dVent => dVent.venta != null && dVent.venta.fechaVenta >= fechaInicio && dVent.venta.fechaVenta < new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1))
@@ -209,7 +210,7 @@ namespace Proyect_InvOperativa.Services
             .OrderBy(gr => new DateTime(gr.Key.Year, gr.Key.Month, 1))
             .Select(gr => gr.Sum(x => x.cantidad))
             .ToList();
-            if (ventasPorMes.Count < 1) throw new InvalidOperationException($"no hay suficientes ventas en los ultimos {meses} meses para el artículo '{articulo.nombreArticulo}' ");
+            if (ventasPorMes.Count < 1) throw new InvalidOperationException($"no hay suficientes ventas en los ultimos {n} meses para el artículo '{articulo.nombreArticulo}' ");
 
             var entradas = new List<DemandaTablaDto>();
             var ventasPorMesAgrupadas = detalles
@@ -221,7 +222,6 @@ namespace Proyect_InvOperativa.Services
                 Cantidad = gr.Sum(x => x.cantidad)
             })
             .ToList();
-
 
             foreach (var venta in ventasPorMesAgrupadas)
             {
@@ -256,81 +256,77 @@ namespace Proyect_InvOperativa.Services
         #endregion
 
         #region regresion lineal
-        public async Task<(double demandaPredicha, double desviacionTotal, double desviacionExplicada, double coefCorrelacion, List<DemandaPuntoXYDto> puntos)> CalcDemandaRegLineal(Articulo articulo, long periodo)
-        {
-            int n = periodo switch
-            {
-                1 => 3,
-                2 => 6,
-                3 => 12,
-                _ => throw new ArgumentException("El periodo ingresado no es válido")
-            };
-            await ValidarExistenciaVentas(articulo);
+	public async Task<(double demandaPredicha, double desviacionTotal, double desviacionExplicada, double coefCorrelacion, List<DemandaPuntoXYDto> puntos)> CalcDemandaRegLineal(Articulo articulo, long periodo)
+	{
+	    int n = periodo switch
+	    {
+		1 => 3,   
+		2 => 6,   
+		3 => 12, 
+		_ => throw new ArgumentException("El periodo ingresado no es válido")
+	    };
+	    await ValidarExistenciaVentas(articulo);
 
-            var fechaInicio = DateTime.Now.AddMonths(-n);
-            var detalles = await _detVentasRepository.GetByArticuloIdAsync(articulo.idArticulo);
+	    // 1er dia del mes actual
+	    var fechaReferencia = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+	    var fechaInicio = fechaReferencia.AddMonths(-n);
+	    var detalles = await _detVentasRepository.GetByArticuloIdAsync(articulo.idArticulo);
+	    var ventasPorMes = detalles
+		.Where(dVent => dVent.venta != null &&
+		                dVent.venta.fechaVenta >= fechaInicio &&
+		                dVent.venta.fechaVenta < fechaReferencia)
+		.GroupBy(dVent => new { dVent.venta.fechaVenta.Year, dVent.venta.fechaVenta.Month })
+		.OrderBy(gr => new DateTime(gr.Key.Year, gr.Key.Month, 1))
+		.Select(gr => gr.Sum(x => x.cantidad))
+		.ToList();
+	    if (ventasPorMes.Count < n) throw new Exception($"No hay suficientes datos de ventas para aplicar regresión lineal de {n} meses al artículo '{articulo.nombreArticulo}'.");
 
-            var ventasPorMes = detalles
-            .Where(dVent => dVent.venta != null &&
-                        dVent.venta.fechaVenta >= fechaInicio &&
-                        dVent.venta.fechaVenta < new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1))
-            .GroupBy(dVent => new { dVent.venta.fechaVenta.Year, dVent.venta.fechaVenta.Month })
-            .OrderBy(gr => new DateTime(gr.Key.Year, gr.Key.Month, 1))
-            .Select(gr => gr.Sum(x => x.cantidad))
-            .ToList();
+	    // datos x-y para regresion
+	    var x = Enumerable.Range(1, ventasPorMes.Count).Select(i => (double)i).ToList();
+	    var y = ventasPorMes.Select(vent => (double)vent).ToList();
+	    double sumX = x.Sum();
+	    double sumY = y.Sum();
+	    double sumXY = x.Zip(y, (xi, yi) => xi * yi).Sum();
+	    double sumX2 = x.Select(xi => xi * xi).Sum();
+	    double x_r = sumX / n;
+	    double y_r = sumY / n;
 
-            if (ventasPorMes.Count < n) throw new Exception($"no hay suficientes datos de ventas para aplicar regresion lineal de {n} meses al articulo '{articulo.nombreArticulo}'");
+	    // coeficientes `a` y `b`
+	    double b = (sumXY - n * x_r * y_r) / (sumX2 - n * x_r * x_r);
+	    double a = y_r - b * x_r;
 
-            // datos x-y
-            var x = Enumerable.Range(1, ventasPorMes.Count).Select(i => (double)i).ToList();
-            var y = ventasPorMes.Select(vent => (double)vent).ToList();
-            double sumX = x.Sum();
-            double sumY = y.Sum();
-            double sumXY = x.Zip(y, (xi, yi) => xi * yi).Sum();
-            double sumX2 = x.Select(xi => xi * xi).Sum();
-            double x_r = sumX / n;
-            double y_r = sumY / n;
+	    // demanda predicha para el prox. periodo
+	    double siguienteMes = x.Last() + 1;
+	    double demanda = a + b * siguienteMes;
 
-            // regresión
-            double b = (sumXY - n * x_r * y_r) / (sumX2 - n * x_r * x_r);
-            double a = y_r - b * x_r;
+	    // varianzas (total y explicada)
+	    double s2rr = y.Count > 1 ? y.Select(yi => Math.Pow(yi - y_r, 2)).Sum() / (n - 1) : 0;
+	    var yEstimada = x.Select(xi => a + b * xi).ToList();
+	    double s2rc = yEstimada.Select(y_ci => Math.Pow(y_ci - y_r, 2)).Sum() / n;
 
-            double siguienteMes = x.Last() + 1;
-            double demanda = a + b * siguienteMes;
+	    // coeficiente de correlacion (r0)
+	    double r0 = s2rr != 0 ? s2rc / s2rr : 0;
 
-            // varianza total (real)
-            double s2rr = y.Count > 1 ? y.Select(yi => Math.Pow(yi - y_r, 2)).Sum() / (n - 1) : 0;
+	    // puntos para graficar
+	    var puntos = new List<DemandaPuntoXYDto>();
+	    for (int i = 0; i < n; i++)
+	    {
+		puntos.Add(new DemandaPuntoXYDto
+		{
+		    x = i + 1,
+		    yReal = y[i],
+		    yEstimado = yEstimada[i]
+		});
+	    }
 
-            // varianza explicada
-            var yEstimada = x.Select(xi => a + b * xi).ToList();
-            double s2rc = yEstimada.Select(y_ci => Math.Pow(y_ci - y_r, 2)).Sum() / n;
-
-            // coef. de correlacion
-            double r0 = s2rr != 0 ? s2rc / s2rr : 0;
-
-            // puntos para graficar
-            var puntos = new List<DemandaPuntoXYDto>();
-
-            for (int i = 0; i < n; i++)
-            {
-                puntos.Add(new DemandaPuntoXYDto
-                {
-                    x = i + 1,
-                    yReal = y[i],
-                    yEstimado = yEstimada[i]
-                });
-            }
-
-            puntos.Add(new DemandaPuntoXYDto
-            {
-                x = n + 1,
-                yReal = null,
-                yEstimado = demanda
-            });
-
-            return (demanda, s2rr, s2rc, r0, puntos);
-        }
-
+	    puntos.Add(new DemandaPuntoXYDto
+	    {
+		x = n + 1,
+		yReal = null,
+		yEstimado = demanda
+	    });
+	    return (demanda, s2rr, s2rc, r0, puntos);
+	}
         #endregion    
 
         private async Task ValidarExistenciaVentas(Articulo articulo)

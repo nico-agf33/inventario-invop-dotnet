@@ -27,7 +27,7 @@ namespace Proyect_InvOperativa.Controllers
         {
             try
             {
-                if (tipoPrediccion == 3 && (!alfa.HasValue || alfa <= 0 || alfa >= 1)) return BadRequest(new { mensaje = "Debe especificarse un valor de alfa entre 0 y 1 para la suavización exponencial." });
+                if (tipoPrediccion == 3 && (!alfa.HasValue || alfa <= 0 || alfa >= 1)) return BadRequest(new { mensaje = "debe especificarse un valor de alfa entre 0 y 1 para la suavizacion exponencial " });
                 var resultado = await _demandaService.CalcDemandaYDesviacion(idArticulo, tipoPrediccion, periodo, alfa ?? 0);
                 return Ok(resultado);
             }catch (Exception ex){return BadRequest(new { mensaje = ex.Message }); }
