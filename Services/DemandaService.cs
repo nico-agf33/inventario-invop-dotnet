@@ -238,7 +238,6 @@ namespace Proyect_InvOperativa.Services
             {
                 double actual = ventasPorMes[i];
                 double suavizado = alfa * actual + (1 - alfa) * suavizadoAnterior;
-
                 err.Add(actual - suavizado);
                 suavizadoAnterior = suavizado;
             }
