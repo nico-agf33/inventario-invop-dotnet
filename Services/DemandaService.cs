@@ -51,7 +51,7 @@ namespace Proyect_InvOperativa.Services
                     break;
 
                 case 4:
-                    (demanda, s2rr, s2rc, r0,puntos) = await CalcDemandaRegLineal(articulo, periodo);
+                    (demanda,desviacionEstandarPeriodo, s2rr, s2rc, r0,puntos) = await CalcDemandaRegLineal(articulo, periodo);
                     break;
 
                 default:
@@ -255,7 +255,7 @@ namespace Proyect_InvOperativa.Services
         #endregion
 
         #region regresion lineal
-	public async Task<(double demandaPredicha, double desviacionTotal, double desviacionExplicada, double coefCorrelacion, List<DemandaPuntoXYDto> puntos)> CalcDemandaRegLineal(Articulo articulo, long periodo)
+	public async Task<(double demandaPredicha,double desviacionEstandarPeriodo, double desviacionTotal, double desviacionExplicada, double coefCorrelacion, List<DemandaPuntoXYDto> puntos)> CalcDemandaRegLineal(Articulo articulo, long periodo)
 	{
 	    int n = periodo switch
 	    {
@@ -302,6 +302,7 @@ namespace Proyect_InvOperativa.Services
 	    double s2rr = y.Count > 1 ? y.Select(yi => Math.Pow(yi - y_r, 2)).Sum() / (n - 1) : 0;
 	    var yEstimada = x.Select(xi => a + b * xi).ToList();
 	    double s2rc = yEstimada.Select(y_ci => Math.Pow(y_ci - y_r, 2)).Sum() / n;
+        double desviacionEstandarPeriodo = Math.Sqrt(s2rr);
 
 	    // coeficiente de correlacion (r0)
 	    double r0 = s2rr != 0 ? s2rc / s2rr : 0;
@@ -324,7 +325,7 @@ namespace Proyect_InvOperativa.Services
 		yReal = null,
 		yEstimado = demanda
 	    });
-	    return (demanda, s2rr, s2rc, r0, puntos);
+	    return (demanda,desviacionEstandarPeriodo, s2rr, s2rc, r0, puntos);
 	}
         #endregion    
 
