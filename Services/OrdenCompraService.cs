@@ -418,24 +418,25 @@ namespace Proyect_InvOperativa.Services
             #endregion
 
                 #region  lista de articulos de Proveedor no incluidos en una ordenCompra
-                public async Task<List<ArticuloDto>> GetArticulosFaltantesEnOrden(long nOrdenCompra, long idProveedor)
-                {
-                    var detalles = await _detalleOrdenCompraRepository.GetDetallesByOrdenId(nOrdenCompra);
-                    var idsArticulosEnOrden = detalles.Select(d => d.articulo.idArticulo).ToHashSet();
+		public async Task<List<ArticuloDto>> GetArticulosFaltantesEnOrden(long nOrdenCompra, long idProveedor)
+		{
+		    var detalles = await _detalleOrdenCompraRepository.GetDetallesByOrdenId(nOrdenCompra);
+		    var idsArticulosEnOrden = detalles.Select(d => d.articulo.idArticulo).ToHashSet();
 
-                    var articulosProveedor = await _proveedorArtRepository.GetAllByProveedorIdAsync(idProveedor);
-                    if (!articulosProveedor.Any()) return new List<ArticuloDto>();
+		    var articulosProveedor = await _proveedorArtRepository.GetAllByProveedorIdAsync(idProveedor);
+		    if (!articulosProveedor.Any()) return new List<ArticuloDto>();
 
-                var articulosFaltantes = articulosProveedor
-                .Where(pArt => !idsArticulosEnOrden.Contains(pArt.articulo.idArticulo))
-                .Select(pArt => new ArticuloDto
-                {
-                    idArticulo = pArt.articulo.idArticulo,
-                    nombreArticulo = pArt.articulo.nombreArticulo
-                    })
-                    .ToList();
-                    return articulosFaltantes;
-                }
+		    var articulosFaltantes = articulosProveedor
+			.Where(pArt => !idsArticulosEnOrden.Contains(pArt.articulo.idArticulo) && pArt.articulo.cgi > 0)
+			.Select(pArt => new ArticuloDto
+			{
+			    idArticulo = pArt.articulo.idArticulo,
+			    nombreArticulo = pArt.articulo.nombreArticulo
+			})
+			.ToList();
+
+		    return articulosFaltantes;
+		}
             #endregion
 
             #region listar ordenes por articulo
