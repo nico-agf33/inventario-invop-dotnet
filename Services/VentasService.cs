@@ -216,7 +216,7 @@ namespace Proyect_InvOperativa.Services
                 if (descuento != null && detalle.cantidadArticulo >= descuento.cantidadDesc)
                 {
                     precioConDescuento = precioVenta * (1 - descuento.porcentajeDesc / 100.0);
-                    advertenciasDescuentos.Add($"se aplicara un descuento del {descuento.porcentajeDesc}% sobre el articulo '{articulo.nombreArticulo}': precio sin descuento = {precioVenta:F2}, precio con descuento = {precioConDescuento:F2}");
+                    advertenciasDescuentos.Add($"se aplicara un descuento del {descuento.porcentajeDesc}% sobre el articulo '{articulo.nombreArticulo}': precio sin descuento = $ {precioVenta:F2}, precio con descuento = $ {precioConDescuento:F2}");
                 }
                 double subtotal = detalle.cantidadArticulo * precioConDescuento;
                 detalle.subtotalVenta = Math.Round(subtotal, 4);
@@ -226,7 +226,7 @@ namespace Proyect_InvOperativa.Services
             if (articulosSinStock.Any())
             {
                 string ids = string.Join(", ", articulosSinStock);
-                throw new Exception($"las cantidades solicitadas para el/los articulo/s {ids} superan el stock actual ");
+                throw new Exception($"las cantidades solicitadas para el/los articulo/s con Id: {ids} superan el stock actual ");
             }
 
             ventaDto.totalVenta = Math.Round(totalVenta, 3);
